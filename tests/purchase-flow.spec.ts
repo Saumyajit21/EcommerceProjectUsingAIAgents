@@ -41,7 +41,7 @@ class PurchaseFlowTests {
     await this.checkoutPage.expectOrderConfirmation();
   }
 }
-
+//comment
 test.describe('Ecommerce purchase flow', () => {
   test('purchases Adidas shoes and Zara Coat 3', async ({ page, stepReporter }) => {
     const loginPage = new LoginPage(page, stepReporter, testData.url);
