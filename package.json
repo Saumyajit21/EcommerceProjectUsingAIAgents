@@ -1,0 +1,13 @@
+{
+  "name": "ecommerce-login-playwright",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:login": "playwright test tests/login.spec.ts",
+    "test:purchase": "playwright test tests/purchase-flow.spec.ts",
+    "test:headed": "playwright test tests/login.spec.ts --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest"
+  }
+}

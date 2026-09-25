@@ -1,0 +1,77 @@
+name: Playwright Tests
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playwright-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Run all Playwright tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: playwright-e2e
+    env:
+      CI: true
+      TEST_DATA_FILE: test-data/ecommerce-login.json
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Create ecommerce test data
+        env:
+          ECOMMERCE_URL: ${{ vars.ECOMMERCE_URL }}
+          ECOMMERCE_USERNAME: ${{ secrets.ECOMMERCE_USERNAME }}
+          ECOMMERCE_PASSWORD: ${{ secrets.ECOMMERCE_PASSWORD }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          const required = ['ECOMMERCE_URL', 'ECOMMERCE_USERNAME', 'ECOMMERCE_PASSWORD'];
+          const missing = required.filter((name) => !process.env[name]);
+          if (missing.length > 0) {
+            throw new Error(`Missing GitHub Actions configuration: ${missing.join(', ')}`);
+          }
+
+          const testData = {
+            url: process.env.ECOMMERCE_URL,
+            username: process.env.ECOMMERCE_USERNAME,
+            password: process.env.ECOMMERCE_PASSWORD,
+          };
+
+          fs.mkdirSync(path.dirname(process.env.TEST_DATA_FILE), { recursive: true });
+          fs.writeFileSync(process.env.TEST_DATA_FILE, JSON.stringify(testData, null, 2));
+          NODE
+
+      - name: Run all tests
+        run: npm test
+
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-html-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: playwright-report/
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,7 @@
+node_modules/
+.playwright-mcp/
+playwright-report/
+test-results/
+.env
+reports/
+test-data/ecommerce-login.json
